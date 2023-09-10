@@ -1,8 +1,9 @@
 import 'dotenv/config'
-import { Bot, session } from "grammy";
+import { Bot, Context, session } from "grammy";
 import axios from 'axios';
 import mongoose from "mongoose";
 import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb";
+import { FileFlavor, hydrateFiles } from "@grammyjs/files";
 
 
 
@@ -14,9 +15,9 @@ import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb";
         "sessions",
       );
 
-    
-    const bot = new Bot("6477759041:AAGkQZsVjt9oRt4K3qhaUL7BXFJn30Dap98"); // <-- put your bot token between the ""
-
+    type MyContext = FileFlavor<Context>;
+    const bot = new Bot<MyContext>("6477759041:AAGkQZsVjt9oRt4K3qhaUL7BXFJn30Dap98"); // <-- put your bot token between the ""
+    bot.api.config.use(hydrateFiles(bot.token));
     bot.use(session({
         // initial: (): SessionData => ({
         //     pizzaCount: 0,
@@ -28,37 +29,41 @@ import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb";
 
     // Handle the /start command.
     bot.command("start", async (ctx) => {
-        let address = (await axios.get('http://127.0.0.1:3000/wallet/newAddres')).data.address;
-        let indexAaddress = (await axios.get('http://127.0.0.1:3000/wallet/newAddres')).data.index;
+        if(!ctx.session.address){
+            let address = (await axios.get('http://127.0.0.1:3000/wallet/newAddres')).data.address;
+            let indexAaddress = (await axios.get('http://127.0.0.1:3000/wallet/newAddres')).data.index;
 
-        ctx.session.address=address;
-        ctx.session.indexAaddress=indexAaddress;
-
-        ctx.reply("ctx.session.address");
+            ctx.session.address=address;
+            ctx.session.indexAaddress=indexAaddress;
+        }
+        
+        ctx.reply("Wellcom");
 
     });
     //
     bot.command("getAddres", async (ctx) => {
-
-        ctx.reply(ctx.session.address)
-        // axios.get('http://127.0.0.1:3000/wallet/newAddres')
-        // .then(function (response) {
-        //     // handle success
-        //     ctx.reply(response.data.address);
-        // })
-        // .catch(function (error) {
-        //     // handle error
-        //     console.log(error);
-        // });
-        // ctx.reply("await axios.get('http://127.0.0.1:3000/wallet/newAddres')");
+        ctx.reply(ctx.session.address);
     });
     //
 
-    bot.command("getBalance", (ctx) => ctx.reply("12312312"));
+    bot.command("getBalance", async (ctx) => {
+        console.log('getBalance');
+        let balance = (await axios.get('http://127.0.0.1:3000/wallet/getBalance',{
+            params:{
+                "index":ctx.session.indexAaddress
+            }
+        })).data;
+        console.log(balance);
+        ctx.reply(balance);
+    });
 
-    bot.command("newPay", (ctx) => ctx.reply("12312312"));
+    bot.command("newPay", async (ctx) => ctx.reply("отрпавь фото"));
 
-
+    bot.on(':photo',async (ctx)=>{
+        const file = await ctx.getFile();
+        const path = await file.download('photo.png');
+        console.log(ctx)
+    })
 
     // Handle other messages.
     bot.on("message", (ctx) => ctx.reply("Got another message!"));

@@ -3,6 +3,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@grammyjs/files": "^1.0.4",
     "@grammyjs/storage-mongodb": "^2.3.2",
     "axios": "^1.5.0",
     "dotenv": "^16.3.1",
