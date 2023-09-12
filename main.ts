@@ -4,9 +4,23 @@ import axios from 'axios';
 import mongoose from "mongoose";
 import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb";
 import { FileFlavor, hydrateFiles } from "@grammyjs/files";
+import { exec } from "https://deno.land/x/exec/mod.ts"
+import { OutputMode } from "https://deno.land/x/exec@0.0.5/mod.ts";
 
 
+// let a = sh('zbarimg photo.jpg')
 
+// var qr = qrcodeParser();
+// var yourscript = exec('sh echo "ads"',
+//         (error, stdout, stderr) => {
+//             console.log(stdout);
+//             console.log(stderr);
+//             if (error !== null) {
+//                 console.log(`exec error: ${error}`);
+//             }
+//         })
+
+// var qr = new QrcodeDecoder();
 // Create an instance of the `Bot` class and pass your bot token to it.
 (async()=>{
 
@@ -60,13 +74,32 @@ import { FileFlavor, hydrateFiles } from "@grammyjs/files";
     bot.command("newPay", async (ctx) => ctx.reply("отрпавь фото"));
 
     bot.on(':photo',async (ctx)=>{
-        const file = await ctx.getFile();
-        const path = await file.download('photo.png');
-        console.log(ctx)
+        let {id} = ctx.from;
+        let pathPhoto = `./bufferQrCodes/${id}.png`;
+
+        let file = await ctx.getFile();
+        await file.download(pathPhoto);
+
+        let returZbarimg = await exec(`zbarimg bufferQrCodes/300774281.png`, {output: OutputMode.Capture});
+
+        if(returZbarimg.status.code != 0){
+            ctx.reply('Qr не распознан');
+            return;
+        }
+
+        ctx.reply(returZbarimg.output)
     })
 
     // Handle other messages.
-    bot.on("message", (ctx) => ctx.reply("Got another message!"));
+    bot.on("message", async (ctx) => {
+        
+        let a = await exec('zbarimg photo2.jpg', {output: OutputMode.Capture});
+        console.log(a);
+        ctx.reply('a')
+
+        // qrcodeParser('./photo.png');
+        
+    });
 
     // Now that you specified how to handle messages, you can start your bot.
     // This will connect to the Telegram servers and wait for messages.
