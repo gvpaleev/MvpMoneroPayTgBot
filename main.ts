@@ -86,8 +86,17 @@ import { OutputMode } from "https://deno.land/x/exec@0.0.5/mod.ts";
             ctx.reply('Qr не распознан');
             return;
         }
+        let url = returZbarimg.output.slice(8);
+        console.log(url)
 
-        ctx.reply(returZbarimg.output)
+        let status = (await axios.post('http://127.0.0.1:3000/tinkoff/pay',{
+            
+            url:`${url}`
+            
+        }));
+        console.log(status);
+
+        ctx.reply(status.data)
     })
 
     // Handle other messages.
